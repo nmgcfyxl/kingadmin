@@ -1,0 +1,151 @@
+{% extends 'kingadmin/base/base.html' %}
+{% load table %}
+
+{% block css %}
+  <style>
+  </style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="layui-row layui-col-space15">
+    <div class="layui-col-md12">
+      <div class="layui-card">
+
+        {% if list_filter_rows %}
+
+
+          <div class="layui-card-body ">
+            <div class="layui-collapse">
+              <div class="layui-colla-item">
+                <h2 class="layui-colla-title">根据条件筛选<i class="layui-icon layui-colla-icon"></i></h2>
+                <div class="layui-colla-content">
+
+                  {% for rows in list_filter_rows %}
+                    <div class="layui-form-item">
+                      {% for row in rows %}
+                        {{ row }}
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="layui-card-body ">
+
+          <!-- 过滤条件 -->
+          {% if list_filter %}
+            <form class="layui-form layui-col-space5">
+              <div class="layui-inline layui-show-xs-block">
+                <input type="text" name="{{ search_param }}" placeholder="关键字查询" autocomplete="off" class="layui-input"
+                       value="{{ keyword }}">
+              </div>
+              <div class="layui-inline layui-show-xs-block">
+                <button class="layui-btn" lay-submit="" lay-filter="sreach">
+                  <i class="layui-icon">&#xe615;</i>
+                </button>
+              </div>
+            </form>
+          {% endif %}
+
+        </div>
+
+
+        <!-- 批量操作开始表单 -->
+        <form class="layui-form" method="post">
+          {% csrf_token %}
+          <div class="layui-card-header">
+            <div class="layui-form-item">
+
+              {% if has_checkbox %}
+                <div class="layui-inline">
+                  <select name="bulk">
+                    <option value="-----"></option>
+                    {% for action in action_list %}
+                      <option value="{{ action.value }}">{{ action.label }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="layui-inline">
+                  <button class="layui-btn layui-btn-normal">
+                    <i class="layui-icon layui-icon-release"></i>执行
+                  </button>
+                </div>
+              {% endif %}
+
+              {% if has_add_button %}
+                <div class="layui-inline">
+                  <div class="layui-btn" onclick="xadmin.open('添加信息','{{ add_url }}',800,600)">
+                    <i class="layui-icon layui-icon-add-circle"></i>添加
+                  </div>
+                </div>
+              {% endif %}
+
+            </div>
+          </div>
+
+          <div class="layui-card-body layui-table-body layui-table-main">
+
+            {% table_data table_data %}
+
+          </div>
+
+          <!-- 批量操作结束表单 -->
+        </form>
+
+        <div class="layui-card-body ">
+          {{ page_html }}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block js %}
+  <script>
+      layui.use(['laydate', 'form'], function () {
+          var laydate = layui.laydate;
+          var form = layui.form;
+
+          // 监听全选
+          form.on('checkbox(checkall)', function (data) {
+              if (data.elem.checked) {
+                  $('tbody input').prop('checked', true);
+              } else {
+                  $('tbody input').prop('checked', false);
+              }
+              form.render('checkbox');
+          });
+      });
+
+      /*删除*/
+      function member_del(obj, url) {
+          layer.confirm('确认要删除吗？', function (index) {
+              //发异步删除数据
+              $.ajax({
+                  url: url,
+                  type: 'GET',
+                  success: res => {
+                      if (res.code === 200) {
+                          console.log(obj);
+                          $(obj).parents("tr").remove();
+                          layer.alert(res.msg, {icon: 6});
+                      } else {
+                          layer.alert(res.msg, {icon: 5});
+                      }
+                  }
+
+              });
+
+          });
+      }
+
+  </script>
+{% endblock %}

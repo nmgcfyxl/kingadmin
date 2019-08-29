@@ -1,0 +1,93 @@
+{% extends 'kingadmin/base/base.html' %}
+
+{% block css %}
+  <style>
+    .error {
+      margin: 10px;
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+  <div class="layui-row">
+    <form class="layui-form">
+      {% for field in fields %}
+        <div class="layui-form-item">
+          <label for="{{ field.id_for_label }}" class="layui-form-label">
+            {% if field.field.required %}
+              <span class="x-red">*</span>
+            {% endif %}
+            {{ field.label }}
+          </label>
+          <div class="layui-input-inline">
+            {{ field }}
+
+            {#  TODO 这里来设置字段名  用来显示错误 #}
+            <span class="error"></span>
+
+          </div>
+        </div>
+      {% endfor %}
+
+      <div class="layui-form-item">
+        <label for="L_repass" class="layui-form-label"></label>
+        <button class="layui-btn" lay-filter="add" lay-submit="">提交</button>
+      </div>
+    </form>
+  </div>
+
+{% endblock %}
+
+{% block js %}
+  <script>layui.use(['form', 'layer'],
+      function () {
+          $ = layui.jquery;
+          var form = layui.form,
+              layer = layui.layer;
+
+          $("input").addClass("layui-input");
+
+          //监听提交
+          form.on('submit(add)',
+              function (data) {
+                  $("input").removeClass("layui-form-danger");
+                  $("input").siblings(".error").text();
+
+                  data.field["csrfmiddlewaretoken"] = '{{ csrf_token }}';
+                  $.ajax({
+                      url: '{{ add_change_url }}',
+                      method: 'POST',
+                      data: data.field,
+                      success: function (res) {
+                          console.log(res);
+                          if (res.code === 200) {
+                              layer.alert(res.msg, {
+                                      icon: 6
+                                  },
+                                  function () {
+                                      // 获得frame索引
+                                      let index = parent.layer.getFrameIndex(window.name);
+                                      //关闭当前frame
+                                      parent.layer.close(index);
+                                      parent.location.reload();
+                                  });
+                          } else {
+                              layer.alert(res.msg, {icon: 5});
+                              // FIXME 错误添加后样式后，没有效果
+                              $.each(res.errors, function (field, val) {
+                                  $("#id_" + field).addClass("layui-form-danger");
+                                  $("#id_" + field).siblings(".error").text(val);
+                              });
+                          }
+                      }
+                  });
+
+                  return false;
+              });
+
+      });</script>
+{% endblock %}
+
+

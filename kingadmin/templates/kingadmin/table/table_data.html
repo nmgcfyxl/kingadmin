@@ -1,0 +1,18 @@
+<table class="layui-table layui-form">
+  <thead>
+  <tr>
+    {% for header in headers %}
+      <th>{{ header }}</th>
+    {% endfor %}
+  </tr>
+  </thead>
+  <tbody>
+  {% for table_data in table_data_list %}
+    <tr>
+      {% for data in table_data %}
+        <td>{{ data }}</td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

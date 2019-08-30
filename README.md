@@ -12,6 +12,7 @@ kingadmin基于X-admin(前端),django-1.11(后端)开发。kingadmin用于快速
             'PRE_PAGE_NUM': 2,  # 每页显示多少条数据
             'PAGE_COUNT': 5,  # 分页显示几个页面
             'PAGE_QUERY': 'p',  # 页码url查询参数
+            'TOTAL_PAGE_NUM': 6,  # 总页码数
    
             'SEARCH_PARAM': 'keyword', # 关键搜索参数
         }

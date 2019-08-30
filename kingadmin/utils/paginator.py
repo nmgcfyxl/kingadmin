@@ -22,9 +22,9 @@ class Paginator:
             print("分页错误", e)
             current_page = 1
 
-        self.query_sets = query_sets
+        self.query_sets = query_sets[:admin_settings.TOTAL_PAGE_NUM * admin_settings.PRE_PAGE_NUM]
         self.query_params = query_params
-        self.total_num = query_sets.count()
+        self.total_num = self.query_sets.count()
 
         max_page_num, mod = divmod(self.total_num, admin_settings.PRE_PAGE_NUM)
         if mod != 0:

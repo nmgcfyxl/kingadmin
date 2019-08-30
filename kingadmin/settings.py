@@ -12,10 +12,11 @@ DEFAULTS = {
     # Pagination
     'PRE_PAGE_NUM': 20,  # 每页显示多少条数据
     'PAGE_COUNT': 5,  # 分页显示几个页面
+    'TOTAL_PAGE_NUM': 200,  # 总页码数
     'PAGE_QUERY': 'page',  # 页码url查询参数
 
     # Filtering
-    'SEARCH_PARAM': 'search', # 关键搜索参数
+    'SEARCH_PARAM': 'search',  # 关键搜索参数
     'ORDERING_PARAM': 'ordering',
 
     # Authentication

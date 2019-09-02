@@ -9,6 +9,7 @@ from django.http.response import JsonResponse
 from django.urls import reverse
 from django.db.models import ForeignKey, ManyToManyField
 from django.utils.safestring import mark_safe
+from django.forms.models import modelform_factory
 
 from kingadmin.settings import admin_settings
 from kingadmin.utils.paginator import Paginator
@@ -205,6 +206,7 @@ class ModelAdmin(object):
 
     list_search = []  # 搜索字段
     list_filter = []  # 条件筛选字段 可以是字段字符串 或者 是 Option类
+    fields = "__all__"  # forms.ModelForm中Meta中的 fields
 
     def __init__(self, model, admin_site):
         self.model = model
@@ -248,12 +250,7 @@ class ModelAdmin(object):
         if self.model_form_class:
             return self.model_form_class
 
-        class AddModelForm(forms.ModelForm):
-            class Meta:
-                model = self.model
-                fields = '__all__'
-
-        return AddModelForm
+        return modelform_factory(self.model, fields=self.fields)
 
     def get_action_list(self) -> list:
         """
@@ -398,7 +395,7 @@ class ModelAdmin(object):
             },
             "has_checkbox": self.get_checkbox(),
             "has_add_button": self.get_add_button(),
-            "add_url": reverse("%s_%s_add" % info),
+            "add_url": reverse("kingadmin:%s_%s_add" % info),
             "action_list": self.get_action_list(),
             "list_filter": self.get_list_search(),
             "keyword": request.GET.get(search_param, ""),
@@ -419,7 +416,7 @@ class ModelAdmin(object):
             forms = AddModelForm()
 
             info = self.model._meta.app_label, self.model._meta.model_name
-            add_url = reverse("%s_%s_add" % info)
+            add_url = reverse("kingadmin:%s_%s_add" % info)
             return render(request, "kingadmin/form.html", {"fields": forms, "add_change_url": add_url})
 
         elif request.method == "POST":
@@ -456,7 +453,7 @@ class ModelAdmin(object):
                 forms = AddModelForm(instance=obj)
 
                 info = self.model._meta.app_label, self.model._meta.model_name
-                change_url = reverse("%s_%s_change" % info, kwargs={"pk": pk})
+                change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
                 return render(request, "kingadmin/form.html", {"fields": forms, "add_change_url": change_url})
 
             else:
@@ -485,6 +482,8 @@ class ModelAdmin(object):
 
 
 class AdminSite(object):
+    namespace = "kingadmin"
+
     def __init__(self):
         self._registry = {}
 
@@ -513,7 +512,7 @@ class AdminSite(object):
 
     @property
     def urls(self):
-        return self.get_urls(), "kingadmin", None
+        return self.get_urls(), "kingadmin", self.namespace
 
     def home(self, request):
         return render(request, "kingadmin/home.html")

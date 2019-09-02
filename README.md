@@ -162,7 +162,7 @@ urlpatterns = [
         <i class="iconfont nav_right">&#xe697;</i></a>
     <ul class="sub-menu">
         <li>
-            <a onclick="xadmin.add_tab('图书列表','{% url 'app01_book_changelist' %}')">
+            <a onclick="xadmin.add_tab('图书列表','{% url 'kingadmin:app01_book_changelist' %}')">
                 <i class="iconfont">&#xe6a7;</i>
                 <cite>图书列表</cite></a>
         </li>
@@ -173,7 +173,7 @@ urlpatterns = [
                 <i class="iconfont nav_right">&#xe697;</i></a>
             <ul class="sub-menu">
                 <li>
-                    <a onclick="xadmin.add_tab('出版社列表','{% url "app01_publisher_changelist" %}')">
+                    <a onclick="xadmin.add_tab('出版社列表','{% url "kingadmin:app01_publisher_changelist" %}')">
                         <i class="iconfont">&#xe6a7;</i>
                         <cite>出版社列表</cite></a>
                 </li>

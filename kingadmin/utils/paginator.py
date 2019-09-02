@@ -30,6 +30,9 @@ class Paginator:
         if mod != 0:
             max_page_num += 1
 
+        if current_page > max_page_num:
+            current_page = max_page_num
+
         self.current_page = current_page
 
         # 所有数据量不足 展示页码数

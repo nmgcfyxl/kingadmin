@@ -128,3 +128,5 @@ dump.rdb
 .idea/*
 
 .DS_Store
+
+future feature.md

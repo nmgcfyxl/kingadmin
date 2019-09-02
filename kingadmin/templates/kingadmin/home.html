@@ -28,7 +28,7 @@
 <!-- 顶部开始 -->
 <div class="container">
   <div class="logo">
-    <a href="{% url 'home' %}">后台管理系统</a></div>
+    <a href="{% url 'kingadmin:home' %}">后台管理系统</a></div>
   <div class="left_open">
     <a><i title="展开左侧栏" class="iconfont">&#xe699;</i></a>
   </div>
@@ -64,7 +64,7 @@
           <i class="iconfont nav_right">&#xe697;</i></a>
         <ul class="sub-menu">
           <li>
-            <a onclick="xadmin.add_tab('图书列表','{% url 'app01_book_changelist' %}')">
+            <a onclick="xadmin.add_tab('图书列表','{% url 'kingadmin:app01_book_changelist' %}')">
               <i class="iconfont">&#xe6a7;</i>
               <cite>图书列表</cite></a>
           </li>
@@ -75,7 +75,7 @@
               <i class="iconfont nav_right">&#xe697;</i></a>
             <ul class="sub-menu">
               <li>
-                <a onclick="xadmin.add_tab('出版社列表','{% url "app01_publisher_changelist" %}')">
+                <a onclick="xadmin.add_tab('出版社列表','{% url "kingadmin:app01_publisher_changelist" %}')">
                   <i class="iconfont">&#xe6a7;</i>
                   <cite>出版社列表</cite></a>
               </li>
@@ -107,7 +107,7 @@
     </div>
     <div class="layui-tab-content">
       <div class="layui-tab-item layui-show">
-        <iframe src='{% url "welcome" %}' frameborder="0" scrolling="yes" class="x-iframe"></iframe>
+        <iframe src='{% url "kingadmin:welcome" %}' frameborder="0" scrolling="yes" class="x-iframe"></iframe>
       </div>
     </div>
     <div id="tab_show"></div>

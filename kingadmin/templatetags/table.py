@@ -25,7 +25,7 @@ def table_thead(info_dict):
 
 
 def table_option_edit(app_label, model_name, pk):
-    url = reverse("%s_%s_change" % (app_label, model_name), kwargs={"pk": pk})
+    url = reverse("kingadmin:%s_%s_change" % (app_label, model_name), kwargs={"pk": pk})
     return f"""
           <a title="编辑" onclick="xadmin.open('编辑','{url}',800,600)" href="javascript:;" class="layui-btn">
               <i class="layui-icon">&#xe642;</i>编辑
@@ -34,7 +34,7 @@ def table_option_edit(app_label, model_name, pk):
 
 
 def table_option_delete(app_label, model_name, pk):
-    url = reverse("%s_%s_delete" % (app_label, model_name), kwargs={"pk": pk})
+    url = reverse("kingadmin:%s_%s_delete" % (app_label, model_name), kwargs={"pk": pk})
     return f""" 
           <a title="删除" onclick="member_del(this,'{url}')" href="javascript:;" class="layui-btn layui-btn-danger">
               <i class="layui-icon">&#xe640;</i>删除

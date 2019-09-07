@@ -26,7 +26,7 @@ class BookAdmin(ModelAdmin):
 
 
 class PublisherAdmin(ModelAdmin):
-    list_display = ["id", "name", "city", "address", "editorial_staff"]
+    list_display = ["id", "name", "city", "address", "editorial_staff", "owner"]
     options = ["delete", "edit"]
     checkbox = True
     list_filter = [
@@ -34,6 +34,7 @@ class PublisherAdmin(ModelAdmin):
         "city",
         Option("address", ),
         Option("editorial_staff", is_multiple=True),
+        Option("owner", is_multiple=True),
     ]
 
     def list_editorial_staff(self, instance):  # instance 表示该行数据的 model实例

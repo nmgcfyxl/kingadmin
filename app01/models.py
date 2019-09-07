@@ -28,6 +28,14 @@ class Publisher(models.Model):
     city = models.IntegerField(verbose_name="城市", choices=city_choices, default=1)
     address = models.CharField(max_length=50, verbose_name="地址", default="")
     editorial_staff = models.ManyToManyField(verbose_name="编辑", to="EditorialStaff")
+    owner = models.ManyToManyField(verbose_name="拥有人", to="Owner")
+
+    def __str__(self):
+        return self.name
+
+
+class Owner(models.Model):
+    name = models.CharField(max_length=20, verbose_name="姓名")
 
     def __str__(self):
         return self.name

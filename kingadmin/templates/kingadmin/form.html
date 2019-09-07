@@ -1,10 +1,13 @@
 {% extends 'kingadmin/base/base.html' %}
+{% load static %}
 
 {% block css %}
+  <link rel="stylesheet" href="{% static 'lib/formSelects/formSelects-v4.css' %}">
   <style>
     .error {
-      margin: 10px;
       color: red;
+      margin-bottom: 5px;
+      margin-top: 2px;
     }
   </style>
 {% endblock %}
@@ -12,82 +15,102 @@
 {% block content %}
 
   <div class="layui-row">
-    <form class="layui-form">
-      {% for field in fields %}
-        <div class="layui-form-item">
+    <div class="layui-col-sm8 layui-col-sm-offset2">
+
+      <form class="layui-form layui-form-pane" novalidate>
+        {% for field in fields %}
           <label for="{{ field.id_for_label }}" class="layui-form-label">
             {% if field.field.required %}
               <span class="x-red">*</span>
             {% endif %}
             {{ field.label }}
           </label>
-          <div class="layui-input-inline">
+
+          <div class="layui-input-block">
             {{ field }}
-
-            {#  TODO 这里来设置字段名  用来显示错误 #}
-            <span class="error"></span>
-
+            <div class="error"></div>
           </div>
-        </div>
-      {% endfor %}
 
-      <div class="layui-form-item">
-        <label for="L_repass" class="layui-form-label"></label>
-        <button class="layui-btn" lay-filter="add" lay-submit="">提交</button>
-      </div>
-    </form>
+        {% endfor %}
+
+        <div class="layui-form-item">
+          <button class="layui-btn" lay-filter="add" lay-submit="">提交</button>
+        </div>
+
+      </form>
+
+    </div>
   </div>
 
 {% endblock %}
 
 {% block js %}
-  <script>layui.use(['form', 'layer'],
-      function () {
-          $ = layui.jquery;
-          var form = layui.form,
-              layer = layui.layer;
+  <script src="{% static 'lib/formSelects/formSelects-v4.min.js' %}"></script>
+  <script>
+      layui.use(['form', 'layer'],
+          function () {
+              $ = layui.jquery;
+              var form = layui.form,
+                  layer = layui.layer;
 
-          $("input").addClass("layui-input");
+              $("input").addClass("layui-input");
 
-          //监听提交
-          form.on('submit(add)',
-              function (data) {
-                  $("input").removeClass("layui-form-danger");
-                  $("input").siblings(".error").text();
-
-                  data.field["csrfmiddlewaretoken"] = '{{ csrf_token }}';
-                  $.ajax({
-                      url: '{{ add_change_url }}',
-                      method: 'POST',
-                      data: data.field,
-                      success: function (res) {
-                          console.log(res);
-                          if (res.code === 200) {
-                              layer.alert(res.msg, {
-                                      icon: 6
-                                  },
-                                  function () {
-                                      // 获得frame索引
-                                      let index = parent.layer.getFrameIndex(window.name);
-                                      //关闭当前frame
-                                      parent.layer.close(index);
-                                      parent.location.reload();
-                                  });
-                          } else {
-                              layer.alert(res.msg, {icon: 5});
-                              // FIXME 错误添加后样式后，没有效果
-                              $.each(res.errors, function (field, val) {
-                                  $("#id_" + field).addClass("layui-form-danger");
-                                  $("#id_" + field).siblings(".error").text(val);
-                              });
-                          }
-                      }
-                  });
-
-                  return false;
+              var formSelects = layui.formSelects;
+              $("select[multiple='multiple']").each((index, element) => {
+                  let id = $(element).attr("id");
+                  $(element).attr("xm-select", id);
+                  formSelects.render(id);
               });
 
-      });</script>
+
+              //监听提交
+              form.on('submit(add)',
+                  function (data) {
+                      $("input").siblings(".error").text("");
+
+                      data.field["csrfmiddlewaretoken"] = '{{ csrf_token }}';
+                      $("select[multiple='multiple']").each((index, element) => {
+                          let name = $(element).attr("_name");
+                          let id = $(element).attr("id");
+                          data.field[name] = formSelects.value(id, 'val');
+                      });
+
+                      console.log(data.field);
+
+                      $.ajax({
+                          url: '{{ add_change_url }}',
+                          method: 'POST',
+                          data: data.field,
+                          traditional: true,
+                          success: function (res) {
+                              console.log(res);
+                              if (res.code === 200) {
+                                  layer.alert(res.msg, {
+                                          icon: 6
+                                      },
+                                      function () {
+                                          // 获得frame索引
+                                          let index = parent.layer.getFrameIndex(window.name);
+                                          //关闭当前frame
+                                          parent.layer.close(index);
+                                          parent.location.reload();
+                                      });
+                              } else {
+                                  layer.alert(res.msg, {icon: 5});
+                                  $.each(res.errors, function (field, val) {
+                                      $("#id_" + field).siblings(".error").text(val);
+                                  });
+                              }
+                          }
+                      });
+
+                      return false;
+                  }
+              );
+
+          })
+      ;
+  </script>
 {% endblock %}
 
 

@@ -19,6 +19,6 @@ from django.contrib import admin
 from kingadmin.service.sites import site
 
 urlpatterns = [
-    # url(r'^admin/', admin.site.urls),
-    url(r'^admin/', site.urls),
+    url(r'^admin/', admin.site.urls),
+    url(r'^kingadmin/', site.urls),
 ]

@@ -1,8 +1,10 @@
 ## 后台管理系统 
 kingadmin基于X-admin(前端),django-1.11(后端)开发。kingadmin用于快速搭建后台管理系统。
 
+### v0.1.2功能
+1. 修复添加、编辑页的下拉框多选问题
+
 ### v0.1.1功能
--
 1. 修复分页页码缺少错误
 2. 增加展示页面操作列可以自定义
 3. 增加全局配置类
@@ -17,10 +19,9 @@ kingadmin基于X-admin(前端),django-1.11(后端)开发。kingadmin用于快速
             'SEARCH_PARAM': 'keyword', # 关键搜索参数
         }
    ```
-   - 目前仅支持`分页`、`关键字搜索`相关功能配置，后续添加其他工鞥
+   - 目前仅支持`分页`、`关键字搜索`相关功能配置，后续添加其他功能
 
 ### v0.1.0功能 
--
 1. 数据展示页面
     1. 单条操作数据
     2. 批量操作数据
@@ -102,6 +103,7 @@ urlpatterns = [
        """
        add_button = True  # 是否显示添加按钮 默认 True
        model_form_class = BookModelForm # 自定义form表单进行页面渲染 默认 None
+       fields = "__all__"  # forms.ModelForm中Meta中的 fields 默认form表单中fields
        
        list_search = ["title", "publisher__name"] # 可搜索字段 默认 []
        list_filter = [  # 条件筛选字段 可以是字段字符串 或者 是 Option类

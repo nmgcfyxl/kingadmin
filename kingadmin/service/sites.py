@@ -203,10 +203,10 @@ class ModelAdmin(object):
 
     add_button = True  # 是否显示添加按钮
     model_form_class = None  # modelForm类
+    fields = "__all__"  # forms.ModelForm中Meta中的 fields
 
     list_search = []  # 搜索字段
     list_filter = []  # 条件筛选字段 可以是字段字符串 或者 是 Option类
-    fields = "__all__"  # forms.ModelForm中Meta中的 fields
 
     def __init__(self, model, admin_site):
         self.model = model
@@ -406,7 +406,6 @@ class ModelAdmin(object):
 
         return render(request, "kingadmin/changelist.html", data)
 
-    # FIXME 添加页面多对多 多选下拉框
     def add_view(self, request):
         """
         添加数据页面
@@ -441,7 +440,6 @@ class ModelAdmin(object):
         else:
             return JsonResponse({"code": 401, "msg": "删除失败"})
 
-    # FIXME 编辑页面多对多 多选下拉框
     def change_view(self, request, pk):
         """
         修改数据页面
@@ -449,8 +447,8 @@ class ModelAdmin(object):
         if request.method == "GET":
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
-                AddModelForm = self.get_model_form_class()
-                forms = AddModelForm(instance=obj)
+                ChangeModelForm = self.get_model_form_class()
+                forms = ChangeModelForm(instance=obj)
 
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
@@ -462,8 +460,8 @@ class ModelAdmin(object):
         elif request.method == "POST":
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
-                AddModelForm = self.get_model_form_class()
-                forms = AddModelForm(data=request.POST, instance=obj)
+                ChangeModelForm = self.get_model_form_class()
+                forms = ChangeModelForm(data=request.POST, instance=obj)
                 if forms.is_valid():
                     forms.save()
                     return JsonResponse({"code": 200, "msg": "修改成功"})

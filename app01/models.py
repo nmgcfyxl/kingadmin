@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 # Create your models here.
@@ -29,6 +30,7 @@ class Publisher(models.Model):
     address = models.CharField(max_length=50, verbose_name="地址", default="")
     editorial_staff = models.ManyToManyField(verbose_name="编辑", to="EditorialStaff")
     owner = models.ManyToManyField(verbose_name="拥有人", to="Owner")
+    create_date = models.DateTimeField(verbose_name="创建时间", default=timezone.now())
 
     def __str__(self):
         return self.name

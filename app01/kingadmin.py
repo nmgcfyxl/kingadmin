@@ -2,6 +2,7 @@ from django import forms
 
 from app01 import models
 from kingadmin.service.sites import ModelAdmin, site, Option
+from kingadmin import fields
 
 
 class BookModelForm(forms.ModelForm):
@@ -26,7 +27,7 @@ class BookAdmin(ModelAdmin):
 
 
 class PublisherAdmin(ModelAdmin):
-    list_display = ["id", "name", "city", "address", "editorial_staff", "owner"]
+    list_display = ["id", "name", "city", "address", "editorial_staff", "owner", "create_date", "test"]
     options = ["delete", "edit"]
     checkbox = True
     list_filter = [
@@ -37,8 +38,11 @@ class PublisherAdmin(ModelAdmin):
         Option("owner", is_multiple=True),
     ]
 
+    test = fields.StringField(source="editorial_staff.first.name", verbose_name="测试")
+
     def list_editorial_staff(self, instance):  # instance 表示该行数据的 model实例
         return "-".join([str(item) for item in instance.editorial_staff.all()] or [])
+        # return instance.editorial_staff.count()
 
 
 site.register(models.Book, BookAdmin)

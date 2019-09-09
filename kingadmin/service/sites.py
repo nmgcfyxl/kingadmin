@@ -2,7 +2,6 @@ from functools import wraps
 
 from django.conf.urls import url
 from django.contrib.admin.sites import AlreadyRegistered
-from django import forms
 from django.db.models import Q
 from django.shortcuts import render
 from django.http.response import JsonResponse
@@ -11,6 +10,7 @@ from django.db.models import ForeignKey, ManyToManyField
 from django.utils.safestring import mark_safe
 from django.forms.models import modelform_factory
 
+from kingadmin.fields import Field
 from kingadmin.settings import admin_settings
 from kingadmin.utils.paginator import Paginator
 
@@ -212,6 +212,21 @@ class ModelAdmin(object):
         self.model = model
         self.admin_site = admin_site
 
+    @property
+    def list_display_fields(self):
+
+        fields = []
+        for field in self.list_display:
+            field_obj = getattr(self, field, None)
+            if isinstance(field_obj, Field):
+                field_obj.bind(field, self)
+                fields.append(field_obj)
+            else:
+                fields.append(field)
+
+        # TODO 如果出现瓶颈, 可以考虑使用 cache, 避免出现重复计算
+        return fields
+
     def get_checkbox(self) -> bool:
         """
         可用于子类判断是否有权限批量删除
@@ -234,7 +249,7 @@ class ModelAdmin(object):
         """
         用于子类继承，根据不同用户展示不同数据，可以跨表查询
         """
-        return self.list_display
+        return self.list_display_fields
 
     def get_list_order(self) -> list:
         """

@@ -1,33 +1,6 @@
 ## 后台管理系统 
 kingadmin基于X-admin(前端),django-1.11(后端)开发。kingadmin用于快速搭建后台管理系统。
 
-### v0.1.2功能
-1. 修复添加、编辑页的下拉框多选问题
-
-### v0.1.1功能
-1. 修复分页页码缺少错误
-2. 增加展示页面操作列可以自定义
-3. 增加全局配置类
-    - 在项目文件settings.py文件中增加配置信息
-    ```python
-        KING_ADMIN = {
-            'PRE_PAGE_NUM': 2,  # 每页显示多少条数据
-            'PAGE_COUNT': 5,  # 分页显示几个页面
-            'PAGE_QUERY': 'p',  # 页码url查询参数
-            'TOTAL_PAGE_NUM': 6,  # 总页码数
-   
-            'SEARCH_PARAM': 'keyword', # 关键搜索参数
-        }
-   ```
-   - 目前仅支持`分页`、`关键字搜索`相关功能配置，后续添加其他功能
-
-### v0.1.0功能 
-1. 数据展示页面
-    1. 单条操作数据
-    2. 批量操作数据
-2. 数据增加页面
-3. 数据删除功能
-4. 数据修改页面
 
 ### 开发环境
 > win10 django-1.11.20 python 3.7.3
@@ -71,6 +44,7 @@ urlpatterns = [
    from django import forms
    
    from app01 import models
+   from kingadmin import fields
    from kingadmin.service.sites import ModelAdmin, site, Option
    
    class BookModelForm(forms.ModelForm):
@@ -86,7 +60,7 @@ urlpatterns = [
    
    
    class BookAdmin(ModelAdmin):
-       list_display = ["title", "publisher", "price", "authors"] # 列表页面展示的字段 目前不支持跨表查自定义 默认 []
+       list_display = ["title", "publisher", "price", "authors", "test"] # 列表页面展示的字段 目前不支持跨表查自定义 默认 []
        list_order = ["id", ] # 排序的字段 field 升序 -filed 降序 默认 []
        checkbox = True # 是否显示复选框  批量操作时，需要此项为True 默认 False
        action_list = ["bulk_delete", "bulk_init"] # 批量操作函数 默认 ["bulk_delete", ] 批量删除
@@ -141,14 +115,31 @@ urlpatterns = [
        '''
        
        
-       def list_authors(self, instance):  # instance 表示该行数据的 model实例
+       def list_authors(self, instance):  # instance 表示该行数据的 model实例 可以用于展示多个值的显示格式
            return "-".join([str(item) for item in instance.editorial_staff.all()] or [])
+           # return instance.editorial_staff.count() # 显示个数
    	
        def bulk_init(self, request): # 自定义批量操作
            pk_list = request.POST.getlist("pk")
            self.model.objects.filter(pk__in=pk_list).update(name="xxx")
            
        bulk_init.label = "批量初始化"
+       
+       test = fields.StringField(source="editorial_staff.first.name", verbose_name="测试")
+       '''
+       fields目标提供一下方法
+       1. StringField 显示获取的数据字符串
+       source用于指定获取的字段值，verbose_name用于显示表头标题
+       2. HtmlField 渲染一段html代码
+       template指定渲染html页面的文件
+       3. ImgHtmlField 渲染一张图片
+       img_domain图片的站点, width图片宽, height图片高
+       4. MethodField 自定义内容
+       类中需要实现 get_{field} 方法
+       eg:
+       def get_xxx(self, instance): # instance是该行的实例对象
+           return "xxx"
+       '''
        
    site.register(models.Book, BookAdmin)
    ```

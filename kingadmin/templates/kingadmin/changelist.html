@@ -80,7 +80,7 @@
 
               {% if has_add_button %}
                 <div class="layui-inline">
-                  <div class="layui-btn" onclick="xadmin.open('添加信息','{{ add_url }}',800,600)">
+                  <div class="layui-btn" onclick="xadmin.open('添加信息','{{ add_url }}')">
                     <i class="layui-icon layui-icon-add-circle"></i>添加
                   </div>
                 </div>
@@ -110,8 +110,7 @@
 
 {% block js %}
   <script>
-      layui.use(['laydate', 'form'], function () {
-          var laydate = layui.laydate;
+      layui.use(['form'], function () {
           var form = layui.form;
 
           // 监听全选

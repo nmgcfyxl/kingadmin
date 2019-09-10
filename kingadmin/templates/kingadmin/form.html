@@ -47,13 +47,23 @@
 {% block js %}
   <script src="{% static 'lib/formSelects/formSelects-v4.min.js' %}"></script>
   <script>
-      layui.use(['form', 'layer'],
+      layui.use(['form', 'layer', 'laydate'],
           function () {
               $ = layui.jquery;
               var form = layui.form,
+                  laydate = layui.laydate,
                   layer = layui.layer;
 
               $("input").addClass("layui-input");
+
+              //日期表单控制
+              {% for field in datetime_fields%}
+                  laydate.render({
+                      elem: '#{{ field.elem }}'
+                      , type: '{{ field.type }}'
+                  });
+              {% endfor %}
+
 
               var formSelects = layui.formSelects;
               $("select[multiple='multiple']").each((index, element) => {

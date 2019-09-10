@@ -3,6 +3,7 @@ from functools import wraps
 from django.conf.urls import url
 from django.contrib.admin.sites import AlreadyRegistered
 from django.db.models import Q
+from django.forms.fields import DateTimeField, DateField, TimeField
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.urls import reverse
@@ -214,7 +215,9 @@ class ModelAdmin(object):
 
     @property
     def list_display_fields(self):
-
+        """
+        对list_display（列表展示字段）进行处理
+        """
         fields = []
         for field in self.list_display:
             field_obj = getattr(self, field, None)
@@ -429,9 +432,22 @@ class ModelAdmin(object):
             AddModelForm = self.get_model_form_class()
             forms = AddModelForm()
 
+            datetime_fields = []
+            for form in forms:
+                if isinstance(form.field, DateTimeField):
+                    datetime_fields.append({"elem": form.id_for_label, "type": "datetime"})
+                elif isinstance(form.field, DateField):
+                    datetime_fields.append({"elem": form.id_for_label, "type": "date"})
+                elif isinstance(form.field, TimeField):
+                    datetime_fields.append({"elem": form.id_for_label, "type": "time"})
+
             info = self.model._meta.app_label, self.model._meta.model_name
             add_url = reverse("kingadmin:%s_%s_add" % info)
-            return render(request, "kingadmin/form.html", {"fields": forms, "add_change_url": add_url})
+            return render(request, "kingadmin/form.html", {
+                "fields": forms,
+                "add_change_url": add_url,
+                "datetime_fields": datetime_fields
+            })
 
         elif request.method == "POST":
             AddModelForm = self.get_model_form_class()
@@ -465,9 +481,22 @@ class ModelAdmin(object):
                 ChangeModelForm = self.get_model_form_class()
                 forms = ChangeModelForm(instance=obj)
 
+                datetime_fields = []
+                for form in forms:
+                    if isinstance(form.field, DateTimeField):
+                        datetime_fields.append({"elem": form.id_for_label, "type": "datetime"})
+                    elif isinstance(form.field, DateField):
+                        datetime_fields.append({"elem": form.id_for_label, "type": "date"})
+                    elif isinstance(form.field, TimeField):
+                        datetime_fields.append({"elem": form.id_for_label, "type": "time"})
+
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
-                return render(request, "kingadmin/form.html", {"fields": forms, "add_change_url": change_url})
+                return render(request, "kingadmin/form.html", {
+                    "fields": forms,
+                    "add_change_url": change_url,
+                    "datetime_fields": datetime_fields
+                })
 
             else:
                 return JsonResponse({"code": 401, "msg": "数据错误"})

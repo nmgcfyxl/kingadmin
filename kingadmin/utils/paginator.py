@@ -22,7 +22,11 @@ class Paginator:
             print("分页错误", e)
             current_page = 1
 
-        self.query_sets = query_sets[:admin_settings.TOTAL_PAGE_NUM * admin_settings.PRE_PAGE_NUM]
+        if query_sets:
+            self.query_sets = query_sets[:admin_settings.TOTAL_PAGE_NUM * admin_settings.PRE_PAGE_NUM]
+        else:
+            self.query_sets = query_sets
+
         self.query_params = query_params
         self.total_num = self.query_sets.count()
 
@@ -139,6 +143,9 @@ class Paginator:
         ''' % (previous_html, inner_html, next_html))
 
         start = (self.current_page - 1) * admin_settings.PRE_PAGE_NUM
-        page_obj = self.query_sets[start:start + admin_settings.PRE_PAGE_NUM]
+        if self.query_sets:
+            page_obj = self.query_sets[start:start + admin_settings.PRE_PAGE_NUM]
+        else:
+            page_obj = self.query_sets
 
         return page_html, page_obj

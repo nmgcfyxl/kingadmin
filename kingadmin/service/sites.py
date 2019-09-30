@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.forms.fields import DateTimeField, DateField, TimeField
 from django.shortcuts import render
 from django.http.response import JsonResponse
-from django.urls import reverse
+from django.urls import reverse, NoReverseMatch
 from django.db.models import ForeignKey, ManyToManyField
 from django.utils.safestring import mark_safe
 from django.forms.models import modelform_factory
@@ -432,21 +432,13 @@ class ModelAdmin(object):
             AddModelForm = self.get_model_form_class()
             forms = AddModelForm()
 
-            datetime_fields = []
-            for form in forms:
-                if isinstance(form.field, DateTimeField):
-                    datetime_fields.append({"elem": form.id_for_label, "type": "datetime"})
-                elif isinstance(form.field, DateField):
-                    datetime_fields.append({"elem": form.id_for_label, "type": "date"})
-                elif isinstance(form.field, TimeField):
-                    datetime_fields.append({"elem": form.id_for_label, "type": "time"})
-
             info = self.model._meta.app_label, self.model._meta.model_name
             add_url = reverse("kingadmin:%s_%s_add" % info)
             return render(request, "kingadmin/form.html", {
                 "fields": forms,
                 "add_change_url": add_url,
-                "datetime_fields": datetime_fields
+                "datetime_fields": self.datetime_fields(forms),
+                "extra_add_fields": self.extra_add_fields(forms)
             })
 
         elif request.method == "POST":
@@ -481,21 +473,13 @@ class ModelAdmin(object):
                 ChangeModelForm = self.get_model_form_class()
                 forms = ChangeModelForm(instance=obj)
 
-                datetime_fields = []
-                for form in forms:
-                    if isinstance(form.field, DateTimeField):
-                        datetime_fields.append({"elem": form.id_for_label, "type": "datetime"})
-                    elif isinstance(form.field, DateField):
-                        datetime_fields.append({"elem": form.id_for_label, "type": "date"})
-                    elif isinstance(form.field, TimeField):
-                        datetime_fields.append({"elem": form.id_for_label, "type": "time"})
-
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
                 return render(request, "kingadmin/form.html", {
                     "fields": forms,
                     "add_change_url": change_url,
-                    "datetime_fields": datetime_fields
+                    "datetime_fields": self.datetime_fields(forms),
+                    "extra_add_fields": self.extra_add_fields(forms)
                 })
 
             else:
@@ -514,6 +498,41 @@ class ModelAdmin(object):
                 return JsonResponse({"code": 401, "msg": "数据错误"})
         else:
             return JsonResponse({"code": 403, "msg": "请求方法不被允许"})
+
+    def datetime_fields(self, forms) -> list:
+        """
+        选出哪些字段是 日期时间类型 用于前端渲染
+        :param forms: 实例化form对象
+        :return:
+        """
+        results = []
+        for form in forms:
+            if isinstance(form.field, DateTimeField):
+                results.append({"elem": form.id_for_label, "type": "datetime"})
+            elif isinstance(form.field, DateField):
+                results.append({"elem": form.id_for_label, "type": "date"})
+            elif isinstance(form.field, TimeField):
+                results.append({"elem": form.id_for_label, "type": "time"})
+        return results
+
+    def extra_add_fields(self, forms):
+        """
+        添加或编辑页面，对跨表字段增加添加按钮
+        :param forms: form实例化对象
+        :return:
+        """
+        results = {}
+        for form in forms:
+            field = self.model._meta.get_field(form.name)
+            if isinstance(field, ManyToManyField) or isinstance(field, ForeignKey):
+                try:
+                    info = field.related_model._meta.app_label, field.related_model._meta.model_name
+                    url = reverse("kingadmin:%s_%s_add" % info)
+                    results[form.name] = url
+                except NoReverseMatch:
+                    continue
+
+        return results
 
     def wrapper(self, func):
         @wraps(func)

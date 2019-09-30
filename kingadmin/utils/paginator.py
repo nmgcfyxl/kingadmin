@@ -24,11 +24,12 @@ class Paginator:
 
         if query_sets:
             self.query_sets = query_sets[:admin_settings.TOTAL_PAGE_NUM * admin_settings.PRE_PAGE_NUM]
+            self.total_num = len(self.query_sets)
         else:
             self.query_sets = query_sets
+            self.total_num = self.query_sets.count()
 
         self.query_params = query_params
-        self.total_num = self.query_sets.count()
 
         max_page_num, mod = divmod(self.total_num, admin_settings.PRE_PAGE_NUM)
         if mod != 0:

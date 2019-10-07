@@ -17,7 +17,7 @@
   <div class="layui-row">
     <div class="layui-col-sm8 layui-col-sm-offset2">
 
-      <form class="layui-form layui-form-pane" novalidate>
+      <form class="layui-form layui-form-pane">
         {% for field in fields %}
           <label for="{{ field.id_for_label }}" class="layui-form-label">
             {% if field.field.required %}
@@ -28,6 +28,14 @@
 
           <div class="layui-input-block">
             {{ field }}
+            {% for key,value in extra_add_fields.items %}
+              {% if field.name == key %}
+                <div onclick="xadmin.open('添加信息','{{ value }}')">
+                  <i class="layui-icon layui-icon-add-1" style="font-size:20px; color: #1E9FFF;"></i>
+                </div>
+              {% endif %}
+            {% endfor %}
+
             <div class="error"></div>
           </div>
 
@@ -64,14 +72,12 @@
                   });
               {% endfor %}
 
-
               var formSelects = layui.formSelects;
               $("select[multiple='multiple']").each((index, element) => {
                   let id = $(element).attr("id");
                   $(element).attr("xm-select", id);
                   formSelects.render(id);
               });
-
 
               //监听提交
               form.on('submit(add)',

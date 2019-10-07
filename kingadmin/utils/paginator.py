@@ -30,7 +30,7 @@ class Paginator:
         if mod != 0:
             max_page_num += 1
 
-        if current_page > max_page_num:
+        if current_page > max_page_num > 0:
             current_page = max_page_num
 
         self.current_page = current_page

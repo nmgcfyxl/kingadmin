@@ -112,10 +112,15 @@ def table_row(info_dict, instance):
 
             if getattr(field_obj, "choices", None):  # choices type
                 row.append(getattr(instance, f"get_{column_name}_display"))
-            elif "DateTimeField" in field_obj.__repr__():
+            elif "DateTimeField" in field_obj.__repr__():  # 时间类型字段
                 column_data = getattr(instance, column_name).strftime("%Y-%m-%d %H:%M:%S") \
                     if getattr(instance, column_name) else ""
                 row.append(column_data)
+            elif "BooleanField" in field_obj.__repr__():  # 布尔值类型字段
+                column_data = '''
+                        <input type="checkbox" disabled %s lay-skin="switch" lay-text="ON|OFF">
+                    ''' % ("checked" if getattr(instance, column_name, 0) == 1 else "")
+                row.append(mark_safe(column_data))
             elif isinstance(field_obj, ManyToManyField):
                 # 判断表格展示字段是否是多对多
                 '''

@@ -7,7 +7,7 @@ kingadmin基于X-admin(前端),django-1.11(后端)开发。kingadmin用于快速
 
 ### 使用说明
 
-1. 项目``settings.py`中INSTALLED_APPS中添加kingadmin
+1. 项目`settings.py`中INSTALLED_APPS中添加kingadmin
 ```python
 
 INSTALLED_APPS = [
@@ -16,7 +16,7 @@ INSTALLED_APPS = [
     ...
 ]
 ```
-2. 项目``urls.py`中添加路由
+2. 项目`urls.py`中添加路由
 ```python
 from kingadmin.service.sites import site
 
@@ -25,7 +25,7 @@ urlpatterns = [
 ]
 ```
 
-3. 在需要展示的app包下，增加``kingadmin.py`文件
+3. 在需要展示的app包下，增加`kingadmin.py`文件
 
 
 4. `kingadmin.py`文件中可配置如下信息

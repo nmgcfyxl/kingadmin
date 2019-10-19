@@ -1,4 +1,5 @@
 from functools import wraps
+from inspect import getfullargspec
 
 from django.conf.urls import url
 from django.contrib.admin.sites import AlreadyRegistered
@@ -10,6 +11,7 @@ from django.urls import reverse, NoReverseMatch
 from django.db.models import ForeignKey, ManyToManyField
 from django.utils.safestring import mark_safe
 from django.forms.models import modelform_factory
+from django.forms.fields import ImageField, FileField
 
 from kingadmin.fields import Field
 from kingadmin.settings import admin_settings
@@ -21,7 +23,7 @@ class Option(object):
     条件筛选类
     """
 
-    def __init__(self, field, condition=[], is_multiple=False, text_func=None, value_func=None):
+    def __init__(self, field, condition="", is_multiple=False, text_func=None, value_func=None):
         """
         初始化条件筛选
         :param field:筛选字段
@@ -190,24 +192,24 @@ class ModelAdmin(object):
     checkbox = False  # 是否启动第一列复选框
     action_list = ["bulk_delete", ]  # 批量操作 需要checkbox=True 默认为批量删除
 
-    options = []  # 操作列 可选值 edit delete 也可以自定义方法 默认 []
     """
     options = ["edit", "delete", "switch"]
-
     def switch(self, model, pk):
         # model 当前模型对象
         # pk 当前行数据的主键
         # return 返回字符串格式
         ...
-
     """
 
     add_button = True  # 是否显示添加按钮
     model_form_class = None  # modelForm类
     fields = "__all__"  # forms.ModelForm中Meta中的 fields
 
+    options = []  # 操作列 可选值 edit delete 也可以自定义方法 默认 []
     list_search = []  # 搜索字段
     list_filter = []  # 条件筛选字段 可以是字段字符串 或者 是 Option类
+
+    extra_add = True  # 添加页面跨表添加开关
 
     def __init__(self, model, admin_site):
         self.model = model
@@ -230,31 +232,31 @@ class ModelAdmin(object):
         # TODO 如果出现瓶颈, 可以考虑使用 cache, 避免出现重复计算
         return fields
 
-    def get_checkbox(self) -> bool:
+    def get_checkbox(self, request) -> bool:
         """
         可用于子类判断是否有权限批量删除
         """
         return self.checkbox
 
-    def get_add_button(self) -> bool:
+    def get_add_button(self, request) -> bool:
         """
         可用于子类判断是否有权限添加数据
         """
         return self.add_button
 
-    def get_options(self) -> list:
+    def get_options(self, request) -> list:
         """
         可用于子类判断是否有权限编辑或删除
         """
         return self.options
 
-    def get_list_display(self) -> list:
+    def get_list_display(self, request) -> list:
         """
         用于子类继承，根据不同用户展示不同数据，可以跨表查询
         """
         return self.list_display_fields
 
-    def get_list_order(self) -> list:
+    def get_list_order(self, request) -> list:
         """
         用于子类继承，根据不同用户进行排序，可以跨表排序
         """
@@ -266,11 +268,15 @@ class ModelAdmin(object):
         :return:
         """
         if self.model_form_class:
+            kwonlyargs = getfullargspec(self.model_form_class.__init__).kwonlyargs
+            if "request" not in kwonlyargs:
+                raise ValueError(f"{self.model_form_class.__name__}类__init__方法必须传递request关键字参数")
+
             return self.model_form_class
 
         return modelform_factory(self.model, fields=self.fields)
 
-    def get_action_list(self) -> list:
+    def get_action_list(self, request) -> list:
         """
         用于子类继承，获取批量操作操作
         """
@@ -282,13 +288,13 @@ class ModelAdmin(object):
 
         return action_list
 
-    def get_list_search(self):
+    def get_list_search(self, request):
         """
         用于子类继承，获取关键字搜索字段，可以跨表过滤
         """
         return self.list_search
 
-    def get_list_filter(self):
+    def get_list_filter(self, request):
         """
         用于子类继承，获取过滤字段，可以跨表过滤
         """
@@ -336,7 +342,7 @@ class ModelAdmin(object):
         :return:
         """
         comb_condition = {}
-        for option in self.get_list_filter():
+        for option in self.get_list_filter(request):
             condition = request.GET.getlist(option.field)
             if condition:
                 comb_condition[f"{option.field}__in"] = condition
@@ -362,11 +368,18 @@ class ModelAdmin(object):
         获取条件筛选的 数据
         """
         list_filter_rows = []
-        for option in self.get_list_filter():
+        for option in self.get_list_filter(request):
             _field = self.model._meta.get_field(option.field)
             row = option.get_queryset(_field, self.model, request.GET)
             list_filter_rows.append(row)
         return list_filter_rows
+
+    def queryset_filter(self, request):
+        """
+        用于子类继承，实现数据展示的过滤
+        :return:
+        """
+        return self.model.objects.all()
 
     def changelist_view(self, request):
         """
@@ -384,12 +397,13 @@ class ModelAdmin(object):
                     if res:
                         return res
 
-        queryset = self.model.objects.all()
+        queryset = self.queryset_filter(request)
 
         # 搜索关键字
         queryset = self.get_search_queryset(request, queryset)
+
         # 排序
-        queryset = queryset.order_by(*self.get_list_order())
+        queryset = queryset.order_by(*self.get_list_order(request))
 
         # 条件筛选
         comb_condition = self.get_list_filter_conditions(request)
@@ -405,17 +419,17 @@ class ModelAdmin(object):
         data = {
             "table_data": {
                 "queryset": queryset,
-                "list_display": self.get_list_display(),
-                "has_checkbox": self.get_checkbox(),
-                "options": self.get_options(),
+                "list_display": self.get_list_display(request),
+                "has_checkbox": self.get_checkbox(request),
+                "options": self.get_options(request),
                 "model": self.model,
                 "admin_class": self,
             },
-            "has_checkbox": self.get_checkbox(),
-            "has_add_button": self.get_add_button(),
+            "has_checkbox": self.get_checkbox(request),
+            "has_add_button": self.get_add_button(request),
             "add_url": reverse("kingadmin:%s_%s_add" % info),
-            "action_list": self.get_action_list(),
-            "list_filter": self.get_list_search(),
+            "action_list": self.get_action_list(request),
+            "list_filter": self.get_list_search(request),
             "keyword": request.GET.get(search_param, ""),
             "page_html": page_html,
             "list_filter_rows": self.get_list_filter_rows(request),
@@ -430,7 +444,10 @@ class ModelAdmin(object):
         """
         if request.method == "GET":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm()
+            if self.model_form_class:
+                forms = AddModelForm(request=request)
+            else:
+                forms = AddModelForm()
 
             info = self.model._meta.app_label, self.model._meta.model_name
             add_url = reverse("kingadmin:%s_%s_add" % info)
@@ -438,12 +455,17 @@ class ModelAdmin(object):
                 "fields": forms,
                 "add_change_url": add_url,
                 "datetime_fields": self.datetime_fields(forms),
-                "extra_add_fields": self.extra_add_fields(forms)
+                "extra_add_fields": self.extra_add_fields(forms),
+                "file_fields": self.file_fields(forms)
             })
 
         elif request.method == "POST":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm(request.POST)
+            if self.model_form_class:
+                forms = AddModelForm(request.POST, request=request)
+            else:
+                forms = AddModelForm(request.POST)
+
             if forms.is_valid():
                 forms.save()
                 return JsonResponse({"code": 200, "msg": "添加成功"})
@@ -471,7 +493,10 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(instance=obj)
+                if self.model_form_class:
+                    forms = ChangeModelForm(instance=obj, request=request)
+                else:
+                    forms = ChangeModelForm(instance=obj)
 
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
@@ -479,7 +504,8 @@ class ModelAdmin(object):
                     "fields": forms,
                     "add_change_url": change_url,
                     "datetime_fields": self.datetime_fields(forms),
-                    "extra_add_fields": self.extra_add_fields(forms)
+                    "extra_add_fields": self.extra_add_fields(forms),
+                    "file_fields": self.file_fields(forms)
                 })
 
             else:
@@ -489,7 +515,11 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(data=request.POST, instance=obj)
+                if self.model_form_class:
+                    forms = ChangeModelForm(data=request.POST, instance=obj, request=request)
+                else:
+                    forms = ChangeModelForm(data=request.POST, instance=obj)
+
                 if forms.is_valid():
                     forms.save()
                     return JsonResponse({"code": 200, "msg": "修改成功"})
@@ -515,12 +545,29 @@ class ModelAdmin(object):
                 results.append({"elem": form.id_for_label, "type": "time"})
         return results
 
+    def file_fields(self, forms) -> list:
+        """
+        选出哪些字段是 文件类型 用于前端渲染
+        :param forms: 实例化form对象
+        :return:
+        """
+        results = []
+        for form in forms:
+            if isinstance(form.field, ImageField):
+                results.append({"elem": form.id_for_label, "type": "image"})
+            elif isinstance(form.field, FileField):
+                results.append({"elem": form.id_for_label, "type": "file"})
+
+        return results
+
     def extra_add_fields(self, forms):
         """
         添加或编辑页面，对跨表字段增加添加按钮
         :param forms: form实例化对象
         :return:
         """
+        if not self.extra_add:
+            return {}
         results = {}
         for form in forms:
             field = self.model._meta.get_field(form.name)

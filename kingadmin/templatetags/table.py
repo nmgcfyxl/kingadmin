@@ -104,7 +104,7 @@ def table_row(info_dict, instance):
 
         if isinstance(column_name, Field):
             # 自定义展示字段 会覆盖models中的字段
-            row.append(f"{column_name.to_representation(column_name.get_attribute(instance))}")
+            row.append(mark_safe(f"{column_name.to_representation(column_name.get_attribute(instance))}"))
 
         elif hasattr(instance, column_name):
             # models中的字段
@@ -116,6 +116,11 @@ def table_row(info_dict, instance):
                 column_data = getattr(instance, column_name).strftime("%Y-%m-%d %H:%M:%S") \
                     if getattr(instance, column_name) else ""
                 row.append(column_data)
+            elif "BooleanField" in field_obj.__repr__():
+                column_data = '''
+                    <input type="checkbox" disabled %s lay-skin="switch" lay-text="ON|OFF">
+                ''' % ("checked" if getattr(instance, column_name, 0) == 1 else "")
+                row.append(mark_safe(column_data))
             elif isinstance(field_obj, ManyToManyField):
                 # 判断表格展示字段是否是多对多
                 '''
@@ -144,7 +149,9 @@ def table_row(info_dict, instance):
         else:
             raise KeyError("cannot find column %s in model" % column_name)
 
-    row.append(table_tbody_options(info_dict, instance))
+    options = table_tbody_options(info_dict, instance)
+    if options:
+        row.append(options)
 
     return row
 

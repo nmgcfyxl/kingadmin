@@ -76,9 +76,10 @@ urlpatterns = [
        
        """
        add_button = True  # 是否显示添加按钮 默认 True
-       model_form_class = BookModelForm # 自定义form表单进行页面渲染 默认 None
+       # 自定义form表单进行页面渲染 默认 None 注意自定义类初始化方法必须接收request关键词参数
+       model_form_class = BookModelForm 
        fields = "__all__"  # forms.ModelForm中Meta中的 fields 默认form表单中fields
-       
+       extra_add = False # 添加、编辑页面是否显示跨表操作按钮
        list_search = ["title", "publisher__name"] # 可搜索字段 默认 []
        list_filter = [  # 条件筛选字段 可以是字段字符串 或者 是 Option类
            Option("name", condition=[{"name__contains": "我"}, {"id__lt": 4}]),
@@ -142,8 +143,8 @@ urlpatterns = [
        '''
        
    site.register(models.Book, BookAdmin)
-   ```
-
+```
+   
    5. 在kingadmin/templates/kingadmin/home.html 中添加需要展示的路由
 
 ```html

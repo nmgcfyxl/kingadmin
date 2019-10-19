@@ -209,6 +209,8 @@ class ModelAdmin(object):
     list_search = []  # 搜索字段
     list_filter = []  # 条件筛选字段 可以是字段字符串 或者 是 Option类
 
+    extra_add = True  # 添加页面跨表添加开关
+
     def __init__(self, model, admin_site):
         self.model = model
         self.admin_site = admin_site
@@ -442,7 +444,10 @@ class ModelAdmin(object):
         """
         if request.method == "GET":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm(request=request)
+            if self.model_form_class:
+                forms = AddModelForm(request=request)
+            else:
+                forms = AddModelForm()
 
             info = self.model._meta.app_label, self.model._meta.model_name
             add_url = reverse("kingadmin:%s_%s_add" % info)
@@ -456,7 +461,11 @@ class ModelAdmin(object):
 
         elif request.method == "POST":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm(request.POST, request=request)
+            if self.model_form_class:
+                forms = AddModelForm(request.POST, request=request)
+            else:
+                forms = AddModelForm(request.POST)
+
             if forms.is_valid():
                 forms.save()
                 return JsonResponse({"code": 200, "msg": "添加成功"})
@@ -484,7 +493,10 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(instance=obj, request=request)
+                if self.model_form_class:
+                    forms = ChangeModelForm(instance=obj, request=request)
+                else:
+                    forms = ChangeModelForm(instance=obj)
 
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
@@ -503,7 +515,11 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(data=request.POST, instance=obj, request=request)
+                if self.model_form_class:
+                    forms = ChangeModelForm(data=request.POST, instance=obj, request=request)
+                else:
+                    forms = ChangeModelForm(data=request.POST, instance=obj)
+
                 if forms.is_valid():
                     forms.save()
                     return JsonResponse({"code": 200, "msg": "修改成功"})
@@ -550,6 +566,8 @@ class ModelAdmin(object):
         :param forms: form实例化对象
         :return:
         """
+        if not self.extra_add:
+            return {}
         results = {}
         for form in forms:
             field = self.model._meta.get_field(form.name)

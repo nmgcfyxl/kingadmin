@@ -1,4 +1,5 @@
 from functools import wraps
+from inspect import getfullargspec
 
 from django.conf.urls import url
 from django.contrib.admin.sites import AlreadyRegistered
@@ -22,7 +23,7 @@ class Option(object):
     条件筛选类
     """
 
-    def __init__(self, field, condition=[], is_multiple=False, text_func=None, value_func=None):
+    def __init__(self, field, condition="", is_multiple=False, text_func=None, value_func=None):
         """
         初始化条件筛选
         :param field:筛选字段
@@ -265,6 +266,10 @@ class ModelAdmin(object):
         :return:
         """
         if self.model_form_class:
+            kwonlyargs = getfullargspec(self.model_form_class.__init__).kwonlyargs
+            if "request" not in kwonlyargs:
+                raise ValueError(f"{self.model_form_class.__name__}类__init__方法必须传递request关键字参数")
+
             return self.model_form_class
 
         return modelform_factory(self.model, fields=self.fields)
@@ -394,6 +399,7 @@ class ModelAdmin(object):
 
         # 搜索关键字
         queryset = self.get_search_queryset(request, queryset)
+
         # 排序
         queryset = queryset.order_by(*self.get_list_order(request))
 
@@ -436,7 +442,7 @@ class ModelAdmin(object):
         """
         if request.method == "GET":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm()
+            forms = AddModelForm(request=request)
 
             info = self.model._meta.app_label, self.model._meta.model_name
             add_url = reverse("kingadmin:%s_%s_add" % info)
@@ -450,7 +456,7 @@ class ModelAdmin(object):
 
         elif request.method == "POST":
             AddModelForm = self.get_model_form_class()
-            forms = AddModelForm(request.POST)
+            forms = AddModelForm(request.POST, request=request)
             if forms.is_valid():
                 forms.save()
                 return JsonResponse({"code": 200, "msg": "添加成功"})
@@ -478,7 +484,7 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(instance=obj)
+                forms = ChangeModelForm(instance=obj, request=request)
 
                 info = self.model._meta.app_label, self.model._meta.model_name
                 change_url = reverse("kingadmin:%s_%s_change" % info, kwargs={"pk": pk})
@@ -497,7 +503,7 @@ class ModelAdmin(object):
             obj = self.model.objects.filter(pk=pk).first()
             if obj:
                 ChangeModelForm = self.get_model_form_class()
-                forms = ChangeModelForm(data=request.POST, instance=obj)
+                forms = ChangeModelForm(data=request.POST, instance=obj, request=request)
                 if forms.is_valid():
                     forms.save()
                     return JsonResponse({"code": 200, "msg": "修改成功"})
